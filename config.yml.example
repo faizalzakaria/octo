@@ -1,0 +1,28 @@
+---
+
+staging:
+  api:
+    name: 'API'
+    region: "ap-southeast-1"
+    asgNames:
+      - "ASG-APIWorker-code3-staging"
+      - "ASG-API-code3-staging"
+  web:
+    name: 'Web App'
+    region: "ap-southeast-1"
+    asgNames:
+      - "ASG-Web-code3-staging"
+
+production:
+  api:
+    name: 'API'
+    region: "ap-northeast-1"
+    asgNames:
+      - "ASG-APIWorker-code3-prod"
+      - "ASG-API-code3-prod"
+  web:
+    name: 'Web App'
+    region: "ap-northeast-1"
+    asgNames:
+      - "ASG-Web-code3-prod"
+

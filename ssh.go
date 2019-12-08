@@ -120,7 +120,7 @@ func sshToServer(instance *ec2.Instance, verbosity int) error {
 
 	instanceIp := *instance.PrivateIpAddress
 
-	fmt.Printf("Connecting to %s ...\n", instanceIp)
+	fmt.Printf("\nConnecting to %s ...\n", instanceIp)
 
 	vflag := ""
 	if verbosity == 1 {

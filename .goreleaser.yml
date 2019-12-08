@@ -49,7 +49,7 @@ brews:
       owner: faizalzakaria
       name: homebrew-tap
 
-    url_template: "http://github.com/faizalzakaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "http://github.com/faizalzakaria/octo/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
     commit_author:
       name: faizalzakaria

@@ -24,8 +24,42 @@ checksum:
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
+  skip: true
   sort: asc
   filters:
     exclude:
     - '^docs:'
     - '^test:'
+brews:
+  -
+    # Name template of the recipe
+    # Default to project name
+    name: octo
+
+    # GOARM to specify which 32-bit arm version to use if there are multiple versions
+    # from the build section. Brew formulas support atm only one 32-bit version.
+    # Default is 6 for all artifacts or each id if there a multiple versions.
+    goarm: 6
+
+    # NOTE: make sure the url_template, the token and given repo (github or gitlab) owner and name are from the
+    # same kind. We will probably unify this in the next major version like it is done with scoop.
+
+    # Github repository to push the tap to.
+    github:
+      owner: faizalzakaria
+      name: homebrew-tap
+
+    url_template: "http://github.com/faizalzakaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+
+    commit_author:
+      name: faizalzakaria
+      email: fai@code3.io
+
+    folder: Formula
+
+    homepage: "http://github.com/faizalzakaria"
+    description: "Toolbelt for your AWS ASGs"
+
+    # Packages your package depends on.
+    dependencies:
+      - git

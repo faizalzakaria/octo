@@ -35,6 +35,6 @@ production:
 ## Usage
 
 ```
-AWS_PROFILE=code3 octo ssh -s api -e prod
+AWS_PROFILE=code3 octo ssh -s api -e production
 ```
 

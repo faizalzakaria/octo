@@ -26,10 +26,22 @@ var cmdSsh = &Command{
 			Usage:   "full or partial environment name",
 		},
 		&cli.StringFlag{
+			Name:        "user",
+			Aliases:     []string{"u"},
+			Usage:       "User to ssh with",
+			DefaultText: "user as per in the ~/.octo/config.yml file",
+		},
+		&cli.StringFlag{
 			Name:    "config",
 			Aliases: []string{"c"},
 			Usage:   "Config file",
 			Value:   "~/.octo/config.yml",
+		},
+		&cli.StringFlag{
+			Name:    "app",
+			Aliases: []string{"a"},
+			Usage:   "App Name, this will read the file ~/.octo.<app anme>.yml",
+			Value:   "",
 		},
 	},
 	Short: "starts a ssh shell into the server",
@@ -63,10 +75,12 @@ func runSsh(c *cli.Context) error {
 	stack := c.String("stack")
 	environment := c.String("environment")
 	configFile := c.String("config")
+	sshUser := c.String("user")
+	appName := c.String("app")
 
 	if len(stack) <= 0 {
-		fmt.Println("Stack is missing")
-		return nil
+		fmt.Println("Stack is missing, using default stack")
+		stack = "default"
 	}
 
 	if len(environment) <= 0 {
@@ -74,27 +88,50 @@ func runSsh(c *cli.Context) error {
 		return nil
 	}
 
+	if len(appName) > 0 {
+		configFile = "~/.octo/config." + appName + ".yml"
+		fmt.Printf("Config file is reconfigured to %s\n", configFile)
+	}
+
 	asgConfigs := map[string]map[string]*AsgConfig{}
 	loadAsgConfigs(configFile, &asgConfigs)
 
 	asgConfig := asgConfigs[environment][stack]
 
+	if asgConfig == nil {
+		fmt.Println("Invalid ASG Config, check your ~/.octo/config.yml file")
+		return nil
+	}
+
 	printAsgConfig(asgConfig)
 
 	instances := getInstances(asgConfig)
 
+	if len(sshUser) <= 0 {
+		if len(asgConfig.User) >= 0 {
+			sshUser = asgConfig.User
+		} else {
+			user, _ := user.Current()
+			sshUser = user.Username
+		}
+	}
+
+	var instanceToSSH *ec2.Instance
 	if len(instances) <= 0 {
 		fmt.Println("No instance found")
 		return nil
+	} else if len(instances) == 1 {
+		instanceToSSH = instances[0]
+	} else {
+		printInstances(instances)
+
+		fmt.Println("\tWhich instance ? ")
+		var i int
+		fmt.Scanf("%d", &i)
+		instanceToSSH = instances[i]
 	}
 
-	printInstances(instances)
-
-	fmt.Println("\tWhich instance ? ")
-	var i int
-	fmt.Scanf("%d", &i)
-
-	sshToServer(instances[i], 0)
+	sshToServer(sshUser, instanceToSSH, 0)
 
 	return nil
 }
@@ -109,18 +146,19 @@ func printInstances(instances []*ec2.Instance) {
 
 func printAsgConfig(asgConfig *AsgConfig) {
 	fmt.Println("\t------------------")
+	fmt.Println("\tASG Config")
+	fmt.Println("\t------------------")
 	fmt.Println("\tName: ", asgConfig.Name)
 	fmt.Println("\tRegion: ", asgConfig.Region)
+	fmt.Println("\tUser: ", asgConfig.User)
 	fmt.Println("\tAsgNames: ", asgConfig.AsgNames)
 	fmt.Println("\t------------------\n")
 }
 
-func sshToServer(instance *ec2.Instance, verbosity int) error {
-	user, _ := user.Current()
-
+func sshToServer(sshUser string, instance *ec2.Instance, verbosity int) error {
 	instanceIp := *instance.PrivateIpAddress
 
-	fmt.Printf("\nConnecting to %s ...\n", instanceIp)
+	fmt.Printf("\nConnecting to %s@%s ...\n", sshUser, instanceIp)
 
 	vflag := ""
 	if verbosity == 1 {
@@ -132,7 +170,7 @@ func sshToServer(instance *ec2.Instance, verbosity int) error {
 	}
 
 	return startProgram("ssh", []string{
-		user.Username + "@" + instanceIp,
+		sshUser + "@" + instanceIp,
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-o", "CheckHostIP=no",
 		"-o", "StrictHostKeyChecking=no",

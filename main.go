@@ -16,6 +16,7 @@ type Command struct {
 }
 
 type AsgConfig struct {
+	User     string   `yaml:"user"`
 	Name     string   `yaml:"name"`
 	AsgNames []string `yaml:"asgNames"`
 	Region   string   `yaml:"region"`

@@ -32,6 +32,13 @@ production:
       - "ASG-API-caterspot-prod"
 ```
 
+## To Install
+
+```
+brew tap faizalzakaria/homebrew-tap
+brew install octo
+```
+
 ## Usage
 
 ```

@@ -105,3 +105,15 @@ func loadAsgConfigs(configFile string, asgConfigs *map[string]map[string]*AsgCon
 	err = yaml.Unmarshal([]byte(data), asgConfigs)
 	check(err)
 }
+
+func uniqueStrings(intSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range intSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}

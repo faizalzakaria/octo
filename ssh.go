@@ -78,23 +78,33 @@ func runSsh(c *cli.Context) error {
 	sshUser := c.String("user")
 	appName := c.String("app")
 
-	if len(stack) <= 0 {
-		fmt.Println("Stack is missing, using default stack")
-		stack = "default"
-	}
-
-	if len(environment) <= 0 {
-		fmt.Println("Environment is missing")
-		return nil
-	}
-
 	if len(appName) > 0 {
 		configFile = "~/.octo/config." + appName + ".yml"
 		fmt.Printf("Config file is reconfigured to %s\n", configFile)
 	}
 
+	// load asgConfigs
 	asgConfigs := map[string]map[string]*AsgConfig{}
 	loadAsgConfigs(configFile, &asgConfigs)
+
+	environments := []string{}
+	stacks := []string{}
+	for k, v := range asgConfigs {
+		environments = append(environments, k)
+		for s := range v {
+			stacks = append(stacks, s)
+		}
+	}
+	environments = uniqueStrings(environments)
+	stacks = uniqueStrings(stacks)
+
+	if len(environment) <= 0 {
+		selectOption("Environment", &environment, environments)
+	}
+
+	if len(stack) <= 0 {
+		selectOption("Stack", &stack, stacks)
+	}
 
 	asgConfig := asgConfigs[environment][stack]
 
@@ -136,6 +146,14 @@ func runSsh(c *cli.Context) error {
 	return nil
 }
 
+func printStringList(list []string) {
+	fmt.Println("\t------------------")
+	for idx, str := range list {
+		fmt.Printf("\t%d: %s\n", idx, str)
+	}
+	fmt.Println("\t------------------\n")
+}
+
 func printInstances(instances []*ec2.Instance) {
 	fmt.Println("\t------------------")
 	for idx, inst := range instances {
@@ -153,6 +171,25 @@ func printAsgConfig(asgConfig *AsgConfig) {
 	fmt.Println("\tUser: ", asgConfig.User)
 	fmt.Println("\tAsgNames: ", asgConfig.AsgNames)
 	fmt.Println("\t------------------\n")
+}
+
+func selectOption(label string, option *string, options []string) {
+	if len(options) <= 0 {
+		fmt.Printf("No %s found", label)
+	} else if len(options) == 1 {
+		*option = options[0]
+	} else {
+		fmt.Printf("\tselect %s\n", label)
+
+		printStringList(options)
+
+		fmt.Printf("\tWhich %s ? ", label)
+		var i int
+		fmt.Scanf("%d", &i)
+		fmt.Println("\t", options[i])
+		*option = options[i]
+	}
+
 }
 
 func sshToServer(sshUser string, instance *ec2.Instance, verbosity int) error {

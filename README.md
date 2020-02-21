@@ -1,6 +1,8 @@
 # octo
 Octo, toolbelt for your DevOps team.
 
+[![asciicast](https://asciinema.org/a/HKlKZ1SfdX4IcS25RGMEuT1R5.svg)](https://asciinema.org/a/HKlKZ1SfdX4IcS25RGMEuT1R5)
+
 
 ## Pre-requisites
 

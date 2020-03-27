@@ -18,8 +18,8 @@ staging:
     name: 'API'
     region: "ap-southeast-1"
     asgNames:
-      - "ASG-APIWorker-caterspot-prod"
-      - "ASG-API-caterspot-prod"
+      - "ASG-APIWorker-code3-prod"
+      - "ASG-API-code3-prod"
   web:
     name: 'Web App'
     region: "ap-southeast-1"
@@ -30,8 +30,8 @@ production:
     Name: 'API'
     region: "ap-northeast-1"
     asgNames:
-      - "ASG-APIWorker-caterspot-prod"
-      - "ASG-API-caterspot-prod"
+      - "ASG-APIWorker-code3-prod"
+      - "ASG-API-code3-prod"
 ```
 
 ## To Install

@@ -66,5 +66,5 @@ git tag -a v1.0.0 -m"Hello""
 Then release
 
 ```sh
-gorelease release
+GITHUB_TOKEN=<Token> goreleaser release
 ```

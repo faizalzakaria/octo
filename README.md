@@ -47,3 +47,24 @@ brew install octo
 AWS_PROFILE=code3 octo ssh -s api -e production
 ```
 
+---
+
+## To build
+
+```sh
+go build
+```
+
+## To release
+
+Create a tag
+
+```sh
+git tag -a v1.0.0 -m"Hello""
+```
+
+Then release
+
+```sh
+gorelease release
+```

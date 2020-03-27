@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/urfave/cli/v2"
 )
@@ -30,6 +32,8 @@ func main() {
 	app := cli.NewApp()
 	cmds := []*cli.Command{}
 
+	setupCloseHandler()
+
 	for _, cmd := range commands {
 		if cmd.Name == "" {
 			log.Fatal("No Name is specified for %s", cmd)
@@ -55,4 +59,13 @@ func main() {
 
 func buildBasicCommand() cli.Command {
 	return cli.Command{}
+}
+
+func setupCloseHandler() {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		os.Exit(0)
+	}()
 }

@@ -126,8 +126,8 @@ func runSsh(ctx *cli.Context) error {
 	}
 
 	// Show list of instances to choose
-	var instanceToSSH *ec2.Instance
-	selectInstance(instanceToSSH, instances)
+	var instanceToSSH ec2.Instance
+	selectInstance(&instanceToSSH, instances)
 
 	// ssh to the server
 	sshToServer(sshUser, instanceToSSH, 0)
@@ -139,14 +139,14 @@ func selectInstance(instance *ec2.Instance, instances []*ec2.Instance) {
 	if len(instances) <= 0 {
 		fmt.Println("No instance found")
 	} else if len(instances) == 1 {
-		instance = instances[0]
+		*instance = *instances[0]
 	} else {
 		printInstances(instances)
 
 		fmt.Println("\tWhich instance ? ")
 		var i int
 		fmt.Scanf("%d", &i)
-		instance = instances[i]
+		*instance = *instances[i]
 	}
 }
 
@@ -169,7 +169,7 @@ func selectOption(label string, option *string, options []string) {
 
 }
 
-func sshToServer(sshUser string, instance *ec2.Instance, verbosity int) error {
+func sshToServer(sshUser string, instance ec2.Instance, verbosity int) error {
 	instanceIp := *instance.PrivateIpAddress
 
 	fmt.Printf("\nConnecting to %s@%s ...\n", sshUser, instanceIp)

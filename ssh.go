@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"runtime"
+	"sort"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/urfave/cli/v2"
@@ -45,20 +46,12 @@ var cmdSsh = &Command{
 		},
 	},
 	Short: "starts a ssh shell into the server",
-	Long: `This will open the firewall for SSH from your IP address temporaritly (20 minutes), downloads the keys if you don't have them
-and starts a SSH session.
+	Long: `This will prompt some action needed, with option to choose which environment and stack
+that you want to connect.
 
-You need to have the right access permissions to use this command.
-You can use either the server name (ie lion) or the server IP (ie. 123.123.123.123) or the server role (ie. web)
-with thie command.
+Alternatively, you have option to set a specific environment and stack from command line.
 
-If a role is specified the command will connect to the first server with that role.
-
-Names are case insensitive and will work with the starting characters as well.
-
-You should provide a key to your bastion server if it is deployed with a deploy gateway.
-
-This command is only supported on Linux and OS X.
+This is only works in Linux based OS.
 
 Examples:
 $ octo ssh -s api -e staging
@@ -66,27 +59,27 @@ $ octo ssh -s web -e production
 `,
 }
 
-func runSsh(c *cli.Context) error {
+func runSsh(ctx *cli.Context) error {
 	if runtime.GOOS == "windows" {
 		log.Fatal("Not supported on Windows")
 		os.Exit(2)
 	}
 
-	stack := c.String("stack")
-	environment := c.String("environment")
-	configFile := c.String("config")
-	sshUser := c.String("user")
-	appName := c.String("app")
+	stack := ctx.String("stack")
+	environment := ctx.String("environment")
+	configFile := ctx.String("config")
+	sshUser := ctx.String("user")
+	appName := ctx.String("app")
 
+	// load asgConfigs
 	if len(appName) > 0 {
 		configFile = "~/.octo/config." + appName + ".yml"
 		fmt.Printf("Config file is reconfigured to %s\n", configFile)
 	}
-
-	// load asgConfigs
 	asgConfigs := map[string]map[string]*AsgConfig{}
 	loadAsgConfigs(configFile, &asgConfigs)
 
+	// Get environments & stacks
 	environments := []string{}
 	stacks := []string{}
 	for k, v := range asgConfigs {
@@ -96,18 +89,22 @@ func runSsh(c *cli.Context) error {
 		}
 	}
 	environments = uniqueStrings(environments)
+	sort.Strings(environments)
 	stacks = uniqueStrings(stacks)
+	sort.Strings(stacks)
 
+	// If no environment set,
 	if len(environment) <= 0 {
 		selectOption("Environment", &environment, environments)
 	}
 
+	// If no stack set,
 	if len(stack) <= 0 {
 		selectOption("Stack", &stack, stacks)
 	}
 
+	// Get the asg config for a given environment & stack
 	asgConfig := asgConfigs[environment][stack]
-
 	if asgConfig == nil {
 		fmt.Println("Invalid ASG Config, check your ~/.octo/config.yml file")
 		return nil
@@ -115,8 +112,10 @@ func runSsh(c *cli.Context) error {
 
 	printAsgConfig(asgConfig)
 
+	// Get instances
 	instances := getInstances(asgConfig)
 
+	// Get the ssh user
 	if len(sshUser) <= 0 {
 		if len(asgConfig.User) >= 0 {
 			sshUser = asgConfig.User
@@ -126,51 +125,29 @@ func runSsh(c *cli.Context) error {
 		}
 	}
 
+	// Show list of instances to choose
 	var instanceToSSH *ec2.Instance
+	selectInstance(instanceToSSH, instances)
+
+	// ssh to the server
+	sshToServer(sshUser, instanceToSSH, 0)
+
+	return nil
+}
+
+func selectInstance(instance *ec2.Instance, instances []*ec2.Instance) {
 	if len(instances) <= 0 {
 		fmt.Println("No instance found")
-		return nil
 	} else if len(instances) == 1 {
-		instanceToSSH = instances[0]
+		instance = instances[0]
 	} else {
 		printInstances(instances)
 
 		fmt.Println("\tWhich instance ? ")
 		var i int
 		fmt.Scanf("%d", &i)
-		instanceToSSH = instances[i]
+		instance = instances[i]
 	}
-
-	sshToServer(sshUser, instanceToSSH, 0)
-
-	return nil
-}
-
-func printStringList(list []string) {
-	fmt.Println("\t------------------")
-	for idx, str := range list {
-		fmt.Printf("\t%d: %s\n", idx, str)
-	}
-	fmt.Println("\t------------------\n")
-}
-
-func printInstances(instances []*ec2.Instance) {
-	fmt.Println("\t------------------")
-	for idx, inst := range instances {
-		fmt.Printf("\t%d: %s\n", idx, *inst.PrivateIpAddress)
-	}
-	fmt.Println("\t------------------\n")
-}
-
-func printAsgConfig(asgConfig *AsgConfig) {
-	fmt.Println("\t------------------")
-	fmt.Println("\tASG Config")
-	fmt.Println("\t------------------")
-	fmt.Println("\tName: ", asgConfig.Name)
-	fmt.Println("\tRegion: ", asgConfig.Region)
-	fmt.Println("\tUser: ", asgConfig.User)
-	fmt.Println("\tAsgNames: ", asgConfig.AsgNames)
-	fmt.Println("\t------------------\n")
 }
 
 func selectOption(label string, option *string, options []string) {
@@ -217,4 +194,31 @@ func sshToServer(sshUser string, instance *ec2.Instance, verbosity int) error {
 		"-p", "22",
 		vflag,
 	})
+}
+
+func printStringList(list []string) {
+	fmt.Println("\t------------------")
+	for idx, str := range list {
+		fmt.Printf("\t%d: %s\n", idx, str)
+	}
+	fmt.Println("\t------------------\n")
+}
+
+func printInstances(instances []*ec2.Instance) {
+	fmt.Println("\t------------------")
+	for idx, inst := range instances {
+		fmt.Printf("\t%d: %s\n", idx, *inst.PrivateIpAddress)
+	}
+	fmt.Println("\t------------------\n")
+}
+
+func printAsgConfig(asgConfig *AsgConfig) {
+	fmt.Println("\t------------------")
+	fmt.Println("\tASG Config")
+	fmt.Println("\t------------------")
+	fmt.Println("\tName: ", asgConfig.Name)
+	fmt.Println("\tRegion: ", asgConfig.Region)
+	fmt.Println("\tUser: ", asgConfig.User)
+	fmt.Println("\tAsgNames: ", asgConfig.AsgNames)
+	fmt.Println("\t------------------\n")
 }

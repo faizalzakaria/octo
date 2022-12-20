@@ -172,7 +172,7 @@ func selectOption(label string, option *string, options []string) {
 func sshToServer(sshUser string, instance ec2.Instance, verbosity int) error {
 	instanceIp := *instance.PrivateIpAddress
 
-	fmt.Printf("\nConnecting to %s@%s ...\n", sshUser, instanceIp)
+	fmt.Printf("\n\033[32mConnecting to %s@%s ...\033[0m\n", sshUser, instanceIp)
 
 	vflag := ""
 	if verbosity == 1 {
@@ -207,7 +207,7 @@ func printStringList(list []string) {
 func printInstances(instances []*ec2.Instance) {
 	fmt.Println("\t------------------")
 	for idx, inst := range instances {
-		fmt.Printf("\t%d: %s\n", idx, *inst.PrivateIpAddress)
+		fmt.Printf("\t%d: %s \033[32m(%s, %s)\033[0m\n", idx, *inst.PrivateIpAddress, *inst.InstanceType, *inst.InstanceLifecycle)
 	}
 	fmt.Println("\t------------------\n")
 }

@@ -45,7 +45,7 @@ var cmdSsh = &Command{
 			Value:   "",
 		},
 	},
-	Short: "starts a ssh shell into the server",
+	Short: "Starts a ssh shell into the server",
 	Long: `This will prompt some action needed, with option to choose which environment and stack
 that you want to connect.
 

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/urfave/cli/v2"
 )
@@ -50,6 +51,14 @@ func main() {
 
 	app.Commands = cmds
 	app.Name = "octo"
+	app.Version = "1.0.8"
+	app.Compiled = time.Now()
+	app.Authors = []*cli.Author{
+		&cli.Author{
+			Name:  "Faizal Zakaria",
+			Email: "fai@code3.io",
+		},
+        }
 
 	err := app.Run(os.Args)
 	if err != nil {

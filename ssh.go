@@ -207,7 +207,12 @@ func printStringList(list []string) {
 func printInstances(instances []*ec2.Instance) {
 	fmt.Println("\t------------------")
 	for idx, inst := range instances {
-		fmt.Printf("\t%d: %s \033[32m(%s, %s)\033[0m\n", idx, *inst.PrivateIpAddress, *inst.InstanceType, *inst.InstanceLifecycle)
+		instanceLifecycle := "normal"
+		if (inst.InstanceLifecycle != nil) {
+			instanceLifecycle = *inst.InstanceLifecycle
+		}
+
+		fmt.Printf("\t%d: %s \033[32m(%s, %s, %s, %s)\033[0m\n", idx, *inst.PrivateIpAddress, *inst.InstanceId, *inst.InstanceType, *inst.ImageId, instanceLifecycle)
 	}
 	fmt.Println("\t------------------\n")
 }

@@ -51,7 +51,7 @@ func main() {
 
 	app.Commands = cmds
 	app.Name = "octo"
-	app.Version = "1.0.8"
+	app.Version = "1.0.9"
 	app.Compiled = time.Now()
 	app.Authors = []*cli.Author{
 		&cli.Author{

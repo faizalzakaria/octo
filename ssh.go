@@ -44,6 +44,12 @@ var cmdSsh = &Command{
 			Usage:   "App Name, this will read the file ~/.octo.<app anme>.yml",
 			Value:   "",
 		},
+		&cli.StringFlag{
+			Name:    "sshKey",
+			Aliases: []string{"i"},
+			Usage:   "SSH Key to use",
+			Value:   "",
+		},
 		&cli.BoolFlag{
 			Name:  "verbose",
 			Usage: "Verbose mode",
@@ -75,6 +81,7 @@ func runSsh(ctx *cli.Context) error {
 	configFile := ctx.String("config")
 	sshUser := ctx.String("user")
 	appName := ctx.String("app")
+	sshKey := ctx.String("sshKey")
 	verbose := ctx.Bool("verbose")
 
 	// load asgConfigs
@@ -140,7 +147,7 @@ func runSsh(ctx *cli.Context) error {
 	if verbose {
 		verbosity = 3
 	}
-	sshToServer(sshUser, instanceToSSH, verbosity)
+	sshToServer(sshUser, sshKey, instanceToSSH, verbosity)
 
 	return nil
 }
@@ -179,7 +186,7 @@ func selectOption(label string, option *string, options []string) {
 
 }
 
-func sshToServer(sshUser string, instance ec2.Instance, verbosity int) error {
+func sshToServer(sshUser string, sshKey string, instance ec2.Instance, verbosity int) error {
 	instanceIp := *instance.PrivateIpAddress
 
 	fmt.Printf("\n\033[32mConnecting to %s@%s ...\033[0m\n", sshUser, instanceIp)
@@ -193,17 +200,22 @@ func sshToServer(sshUser string, instance ec2.Instance, verbosity int) error {
 		vflag = "-vvv"
 	}
 
-	return startProgram("ssh", []string{
+	options := []string{
 		sshUser + "@" + instanceIp,
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-o", "CheckHostIP=no",
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "LogLevel=QUIET",
-		"-o", "IdentitiesOnly=yes",
 		"-A",
 		"-p", "22",
 		vflag,
-	})
+	}
+
+	if sshKey != "" {
+		options = append(options, "-i", sshKey)
+	}
+
+	return startProgram("ssh", options)
 }
 
 func printStringList(list []string) {

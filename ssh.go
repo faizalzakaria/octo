@@ -143,10 +143,11 @@ func runSsh(ctx *cli.Context) error {
 	selectInstance(&instanceToSSH, instances)
 
 	// ssh to the server
-	verbosity := 1
-	if verbose {
-		verbosity = 3
+	verbosity := 0
+	if verbose == true {
+		verbosity = 1
 	}
+
 	sshToServer(sshUser, sshKey, instanceToSSH, verbosity)
 
 	return nil

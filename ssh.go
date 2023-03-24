@@ -44,6 +44,11 @@ var cmdSsh = &Command{
 			Usage:   "App Name, this will read the file ~/.octo.<app anme>.yml",
 			Value:   "",
 		},
+		&cli.BoolFlag{
+			Name:  "verbose",
+			Usage: "Verbose mode",
+			Value: false,
+		},
 	},
 	Short: "Starts a ssh shell into the server",
 	Long: `This will prompt some action needed, with option to choose which environment and stack
@@ -70,6 +75,7 @@ func runSsh(ctx *cli.Context) error {
 	configFile := ctx.String("config")
 	sshUser := ctx.String("user")
 	appName := ctx.String("app")
+	verbose := ctx.Bool("verbose")
 
 	// load asgConfigs
 	if len(appName) > 0 {
@@ -130,7 +136,11 @@ func runSsh(ctx *cli.Context) error {
 	selectInstance(&instanceToSSH, instances)
 
 	// ssh to the server
-	sshToServer(sshUser, instanceToSSH, 0)
+	verbosity := 1
+	if verbose {
+		verbosity = 3
+	}
+	sshToServer(sshUser, instanceToSSH, verbosity)
 
 	return nil
 }
@@ -208,7 +218,7 @@ func printInstances(instances []*ec2.Instance) {
 	fmt.Println("\t------------------")
 	for idx, inst := range instances {
 		instanceLifecycle := "normal"
-		if (inst.InstanceLifecycle != nil) {
+		if inst.InstanceLifecycle != nil {
 			instanceLifecycle = *inst.InstanceLifecycle
 		}
 

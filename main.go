@@ -51,14 +51,14 @@ func main() {
 
 	app.Commands = cmds
 	app.Name = "octo"
-	app.Version = "1.0.9"
+	app.Version = "1.1.0"
 	app.Compiled = time.Now()
 	app.Authors = []*cli.Author{
 		&cli.Author{
 			Name:  "Faizal Zakaria",
 			Email: "fai@code3.io",
 		},
-        }
+	}
 
 	err := app.Run(os.Args)
 	if err != nil {
